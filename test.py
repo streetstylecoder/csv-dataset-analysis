@@ -28,32 +28,35 @@ def display_data(df):
     
     for predictor in numeric_df.columns:
         if predictor != target_variable:
-            # Fit regression model with `predictor` as the independent and `target_variable` as the dependent variable
-            X = sm.add_constant(numeric_df[predictor])  # Predictor
-            Y = numeric_df[target_variable]  # Response
-            model = sm.OLS(Y, X).fit()
+            corr_value = correlation.at[target_variable, predictor]
+            # Filter to display only strong correlations
+            if abs(corr_value) > 0.5:
+                # Fit regression model with `predictor` as the independent and `target_variable` as the dependent variable
+                X = sm.add_constant(numeric_df[predictor])  # Predictor
+                Y = numeric_df[target_variable]  # Response
+                model = sm.OLS(Y, X).fit()
 
-            # Check for significant correlation and regression
-            if abs(correlation.at[target_variable, predictor]) > 0.5 and model.pvalues[predictor] < 0.05:
-                # Create a scatter plot using Altair
-                chart = alt.Chart(df).mark_circle(size=60).encode(
-                    x=alt.X(predictor, title=predictor),
-                    y=alt.Y(target_variable, title=target_variable),
-                    tooltip=[predictor, target_variable]
-                ).interactive().properties(
-                    width=300,
-                    height=300
-                )
+                # Check for significant regression results
+                if model.pvalues[predictor] < 0.05:
+                    # Create a scatter plot using Altair
+                    chart = alt.Chart(df).mark_circle(size=60).encode(
+                        x=alt.X(predictor, title=predictor),
+                        y=alt.Y(target_variable, title=target_variable),
+                        tooltip=[predictor, target_variable]
+                    ).interactive().properties(
+                        width=300,
+                        height=300
+                    )
 
-                target_column = first_column and col1 or col2
-                target_column.altair_chart(chart)
-                target_column.write(f"**Impact of {predictor} on {target_variable}:**")
-                target_column.write(f"Correlation impact: {'increases' if correlation.at[target_variable, predictor] > 0 else 'decreases'}")
-                target_column.write(f"Every unit increase in `{predictor}` typically results in {model.params[predictor]:.4f} unit {'increase' if model.params[predictor] > 0 else 'decrease'} in `{target_variable}`.")
-                target_column.write(f"This relationship accounts for {model.rsquared:.2%} of the observed variations in `{target_variable}`, indicating a {'strong' if model.rsquared > 0.5 else 'moderate'} influence.")
-                target_column.write(f"The statistical significance of this effect is strong (P-value: {model.pvalues[predictor]:.4g}). This suggests that the changes are likely not due to random fluctuations.")
+                    target_column = first_column and col1 or col2
+                    target_column.altair_chart(chart)
+                    target_column.write(f"**Impact of {predictor} on {target_variable}:**")
+                    target_column.write(f"Correlation impact: {'increases' if corr_value > 0 else 'decreases'} `{corr_value:.2f}`")
+                    target_column.write(f"Every unit increase in `{predictor}` typically results in {model.params[predictor]:.4f} unit {'increase' if model.params[predictor] > 0 else 'decrease'} in `{target_variable}`.")
+                    target_column.write(f"This relationship accounts for {model.rsquared:.2%} of the observed variations in `{target_variable}`, indicating a {'strong' if model.rsquared > 0.5 else 'moderate'} influence.")
+                    target_column.write(f"The statistical significance of this effect is strong (P-value: {model.pvalues[predictor]:.4g}). This suggests that the changes are likely not due to random fluctuations.")
 
-                first_column = not first_column
+                    first_column = not first_column
 
 # Check if a file has been uploaded
 if uploaded_file is not None:
