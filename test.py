@@ -18,29 +18,28 @@ def display_data(df):
     numeric_df = df.select_dtypes(include=[np.number])
     correlation = numeric_df.corr()
 
-    # Let user select a numeric column to analyze
-    column_to_analyze = st.selectbox('Select a numeric column to analyze:', numeric_df.columns)
+    # Let user select a numeric column to analyze as the target variable
+    target_variable = st.selectbox('Select a numeric column to analyze as the target:', numeric_df.columns)
 
-    st.write(f"### Impact Analysis for {column_to_analyze}")
-    selected_correlation = correlation[column_to_analyze].drop(column_to_analyze)  # Remove self-correlation
-
+    st.write(f"### Impact Analysis of Variables on {target_variable}")
+    
     first_column = True
     col1, col2 = st.columns(2)
     
-    for col in selected_correlation.index:
-        if abs(selected_correlation[col]) > 0.5:
-            # Fit regression model
-            X = sm.add_constant(numeric_df[column_to_analyze])  # Predictor
-            Y = numeric_df[col]  # Response
+    for predictor in numeric_df.columns:
+        if predictor != target_variable:
+            # Fit regression model with `predictor` as the independent and `target_variable` as the dependent variable
+            X = sm.add_constant(numeric_df[predictor])  # Predictor
+            Y = numeric_df[target_variable]  # Response
             model = sm.OLS(Y, X).fit()
 
             # Check for significant correlation and regression
-            if model.pvalues[column_to_analyze] < 0.05:
+            if abs(correlation.at[target_variable, predictor]) > 0.5 and model.pvalues[predictor] < 0.05:
                 # Create a scatter plot using Altair
                 chart = alt.Chart(df).mark_circle(size=60).encode(
-                    x=alt.X(column_to_analyze, title=column_to_analyze),
-                    y=alt.Y(col, title=col),
-                    tooltip=[column_to_analyze, col]
+                    x=alt.X(predictor, title=predictor),
+                    y=alt.Y(target_variable, title=target_variable),
+                    tooltip=[predictor, target_variable]
                 ).interactive().properties(
                     width=300,
                     height=300
@@ -48,11 +47,11 @@ def display_data(df):
 
                 target_column = first_column and col1 or col2
                 target_column.altair_chart(chart)
-                target_column.write(f"**Impact of changing {column_to_analyze} on {col}:**")
-                target_column.write(f"Correlation impact: {'increases' if selected_correlation[col] > 0 else 'decreases'}")
-                target_column.write(f"Every unit increase in `{column_to_analyze}` typically results in {model.params[column_to_analyze]:.4f} unit {'increase' if model.params[column_to_analyze] > 0 else 'decrease'} in `{col}`.")
-                target_column.write(f"This relationship accounts for {model.rsquared:.2%} of the changes observed in `{col}`, indicating a {'strong' if model.rsquared > 0.5 else 'moderate'} influence.")
-                target_column.write(f"The statistical significance of this effect is strong (P-value: {model.pvalues[column_to_analyze]:.4g}). This suggests that the changes are likely not due to random fluctuations.")
+                target_column.write(f"**Impact of {predictor} on {target_variable}:**")
+                target_column.write(f"Correlation impact: {'increases' if correlation.at[target_variable, predictor] > 0 else 'decreases'}")
+                target_column.write(f"Every unit increase in `{predictor}` typically results in {model.params[predictor]:.4f} unit {'increase' if model.params[predictor] > 0 else 'decrease'} in `{target_variable}`.")
+                target_column.write(f"This relationship accounts for {model.rsquared:.2%} of the observed variations in `{target_variable}`, indicating a {'strong' if model.rsquared > 0.5 else 'moderate'} influence.")
+                target_column.write(f"The statistical significance of this effect is strong (P-value: {model.pvalues[predictor]:.4g}). This suggests that the changes are likely not due to random fluctuations.")
 
                 first_column = not first_column
 
