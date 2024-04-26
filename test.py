@@ -14,19 +14,6 @@ uploaded_file = st.file_uploader("Choose a CSV file", type="csv")
 def display_data(df):
     st.write("### Data Preview", df.head())
 
-    st.write("""
-    ### Column Descriptions:
-    - **Administrative**: Number of pages of this type (administrative) that the user visited.
-    - **Administrative_Duration**: Amount of time spent in this category of pages.
-    - **Informational**: Number of pages of this type (informational) that the user visited.
-    - **Informational_Duration**: Amount of time spent in this category of pages.
-    - **ProductRelated**: Number of pages of this type (product-related) that the user visited.
-    - **ProductRelated_Duration**: Amount of time spent in this category of pages.
-    - **BounceRates**: Percentage of visitors who enter the website through that page and exit without triggering any additional tasks.
-    - **ExitRates**: Percentage of pageviews on the website that end at that specific page.
-    - **PageValues**: Average value of the page averaged over the value of the target page and/or the completion of an eCommerce transaction.
-    - **SpecialDay**: This value represents the closeness of the browsing date to special days or holidays (e.g., Mother's Day or Valentine's Day).
-    """)
 
     # Perform correlation and regression analysis on numeric columns
     numeric_df = df.select_dtypes(include=[np.number])
@@ -80,5 +67,18 @@ if uploaded_file is not None:
 else:
     # Path to the local CSV file
     csv_file_path = 'online_shoppers_intention.csv'
+    st.write("""
+    ### Column Descriptions:
+    - **Administrative**: Number of pages of this type (administrative) that the user visited.
+    - **Administrative_Duration**: Amount of time spent in this category of pages.
+    - **Informational**: Number of pages of this type (informational) that the user visited.
+    - **Informational_Duration**: Amount of time spent in this category of pages.
+    - **ProductRelated**: Number of pages of this type (product-related) that the user visited.
+    - **ProductRelated_Duration**: Amount of time spent in this category of pages.
+    - **BounceRates**: Percentage of visitors who enter the website through that page and exit without triggering any additional tasks.
+    - **ExitRates**: Percentage of pageviews on the website that end at that specific page.
+    - **PageValues**: Average value of the page averaged over the value of the target page and/or the completion of an eCommerce transaction.
+    - **SpecialDay**: This value represents the closeness of the browsing date to special days or holidays (e.g., Mother's Day or Valentine's Day).
+    """)
     df = pd.read_csv(csv_file_path)
     display_data(df)
